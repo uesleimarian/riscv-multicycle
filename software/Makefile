@@ -1,43 +1,32 @@
-RISCV_TOOLS_PREFIX = C:/PRG/Atividades/riscv-multicycle/compiler/gcc/bin/riscv-none-embed-
+#RISCV_TOOLS_PREFIX = ../compiler/gcc/bin/riscv-none-elf-
+#RISCV_TOOLS_PREFIX = C:/PRG/Atividades/riscv-multicycle/compiler/gcc/bin/riscv-none-embed-   #SOFIA
+RISCV_TOOLS_PREFIX = c:/xpack-riscv-none-elf-gcc-11.3.0-1/bin/riscv-none-elf-        # UESLEI
 
-QUARTUS_DIR = C:/intelFPGA/20.1/quartus/bin/
 
-PYTHON = python
-
+QUARTUS_DIR=~/Data/Apps/intelFPGA/20.1/quartus/bin/
 CXX = $(RISCV_TOOLS_PREFIX)g++ -march=rv32im
-CC  = $(RISCV_TOOLS_PREFIX)gcc -march=rv32im -O1 -fpack-struct
-AS  = $(RISCV_TOOLS_PREFIX)gcc -march=rv32im
-
+CC = $(RISCV_TOOLS_PREFIX)gcc -march=rv32im -O1 -fpack-struct
+AS = $(RISCV_TOOLS_PREFIX)gcc -march=rv32im
+#CXXFLAGS = -MD -O1 -Wall -std=c++11
+#CCFLAGS = -MD -O1 -Wall
+#LDFLAGS = -Wl,--gc-sections,--no-relax
 LDFLAGS = -Wl
 LDLIBS =
-
-MAIN = blink
+MAIN = main
 
 quartus_$(MAIN).hex: $(MAIN)32.hex
-	$(PYTHON) hex8tointel.py $(MAIN).tmp > quartus_$(MAIN).hex
-	rm -f $(MAIN)32.hex
+	python3 hex8tointel.py $(MAIN).tmp > quartus_$(MAIN).hex
+	rm $(MAIN)32.hex
 
 $(MAIN)32.hex: $(MAIN).elf hex8tohex32.py
 	$(RISCV_TOOLS_PREFIX)objcopy -O verilog $(MAIN).elf $(MAIN).tmp
 	$(RISCV_TOOLS_PREFIX)objdump -h -S $(MAIN).elf > "$(MAIN).lss"
-	$(PYTHON) hex8tohex32.py $(MAIN).tmp > $(MAIN)32.hex
+	python3 hex8tohex32.py $(MAIN).tmp > $(MAIN)32.hex
 
 start.o: _core/start.S
 	$(CC) -c -nostdlib _core/start.S $(LDLIBS)
 
-_core/syscalls.o: _core/syscalls.c
-	$(CC) -c -nostdlib _core/syscalls.c -o _core/syscalls.o $(LDLIBS)
-
-_core/utils.o: _core/utils.c
-	$(CC) -c -nostdlib _core/utils.c -o _core/utils.o $(LDLIBS)
-
-gpio/gpio.o: gpio/gpio.c
-	$(CC) -c -nostdlib gpio/gpio.c -o gpio/gpio.o $(LDLIBS)
-
-$(MAIN).o: $(MAIN).c
-	$(CC) -c -nostdlib $(MAIN).c -o $(MAIN).o $(LDLIBS)
-
-$(MAIN).elf: $(MAIN).o start.o _core/syscalls.o _core/utils.o gpio/gpio.o
+$(MAIN).elf: $(MAIN).o start.o _core/syscalls.o _core/utils.o gpio/gpio.o raiz/raiz.o
 	$(CC) $(LDFLAGS),-Map=$(MAIN).map -o $@ $^ -T _core/sections.ld $(LDLIBS)
 	chmod -x $(MAIN).elf
 
@@ -51,18 +40,8 @@ flash: quartus_$(MAIN).hex
 	$(QUARTUS_DIR)quartus_stp_tcl -t "flash.tcl"
 
 clean:
-	rm -f */*.o
-	rm -f *.o
-	rm -f *.d
-	rm -f *.tmp
-	rm -f *.lss
-	rm -f *.map
-	rm -f start.elf
-	rm -f $(MAIN).elf
-	rm -f $(MAIN).hex
-	rm -f $(MAIN)32.hex
-	rm -f quartus_$(MAIN).hex
+	rm -f */*.o *.o *.d *.tmp start.elf *.lss *.map
+	rm -f $(MAIN).elf $(MAIN).hex $(MAIN)32.hex quartus_$(MAIN).hex
 
 -include *.d
-
-.PHONY: sint fpga flash clean
+.PHONY: test clean
