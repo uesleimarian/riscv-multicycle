@@ -127,9 +127,10 @@ architecture rtl of de0_lite_gpio is
     signal ddata_r_crc : std_logic_vector(31 downto 0);
     signal ddata_r_key : std_logic_vector(31 downto 0);
     signal ddata_r_accelerometer : std_logic_vector(31 downto 0);
-	 signal ddata_r_cordic : std_logic_vector(31 downto 0);
-	 signal ddata_r_rgb : std_logic_vector(31 downto 0);
-	 signal ddata_r_RS485 : std_logic_vector(31 downto 0);
+    signal ddata_r_cordic : std_logic_vector(31 downto 0);
+    signal ddata_r_rgb : std_logic_vector(31 downto 0);
+    signal ddata_r_RS485 : std_logic_vector(31 downto 0);
+    signal ddata_r_raiz : std_logic_vector(31 downto 0);
 	 
     -- Interrupt Signals
     signal interrupts : std_logic_vector(31 downto 0);
@@ -140,6 +141,9 @@ architecture rtl of de0_lite_gpio is
     signal input_in : std_logic_vector(31 downto 0);
 
     signal ifcap :  std_logic;      -- capture flag
+
+    -- Signdata raiz
+   
 
 begin
 
@@ -254,10 +258,11 @@ begin
             ddata_r_spwm  		=> ddata_r_spwm,
             ddata_r_crc			=> ddata_r_crc,
             ddata_r_key       => ddata_r_key,
-				ddata_r_cordic    => ddata_r_cordic,
-				ddata_r_RS485     => ddata_r_RS485,
-				ddata_r_rgb       => ddata_r_rgb,
-            ddata_r_accelerometer     => ddata_r_accelerometer
+            ddata_r_cordic    => ddata_r_cordic,
+            ddata_r_RS485     => ddata_r_RS485,
+            ddata_r_rgb       => ddata_r_rgb,
+            ddata_r_accelerometer     => ddata_r_accelerometer,
+            ddata_r_raiz => ddata_r_raiz
         );
 
 	  generic_gpio: entity work.gpio	    
@@ -316,6 +321,27 @@ begin
             hex6     => open,
             hex7     => open
         );
+
+    generic_raiz : entity work.raiz
+        generic map(
+            MY_CHIPSELECT     => "10",
+            MY_WORD_ADDRESS   => x"0010"
+        )
+        port map(
+            clk      => clk,
+            rst      => rst,
+            daddress => daddress,
+            ddata_w  => ddata_w,
+            ddata_r  => ddata_r_raiz,
+            d_we     => d_we,
+            d_rd     => d_rd,
+            dcsel    => dcsel,
+            dmask    => dmask,
+            switches => sw
+        );
+
+    
+        
 
     -- Connect input hardware to gpio data
     gpio_input(3 downto 0) <= SW(3 downto 0);
